@@ -12,7 +12,7 @@ TimeTracker is tested with Ruby 1.9.2, simply install it by calling:
 Goto the directory where you want to create your sheets and create a config file. TimeTracker is highly configurable because of localization issues, different working times etc. 
 
 	{
-		"url" : "https://p04-calendarws.icloud.com/ca/subscribe/1/Hitd9hXEtXbpwPM7M8n2Qy_kh9-4Z2hWg831H9PvfpMM9OKA1S5iZ6lfLSH2Avy5tBhSlGqoDPV7ty47XoiHHfuhBNWCEGCK4VxsDqEkSlQ",
+		"url" : "your url",
 		
 		"name" : "Your Name",
 		"department" : "Your Department",
