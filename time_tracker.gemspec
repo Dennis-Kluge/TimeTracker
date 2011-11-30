@@ -10,9 +10,7 @@ Gem::Specification.new do |s|
   s.email       = ["d-staar@gmx.de"]
   s.homepage    = ""
   s.summary     = "Create time sheets with the help of a public iCal file"
-  s.description = "In some companies you need to track your working time with the help of excel. For that purpose you have to create sheets and put each entry into the file by hand. TimeTracker.rb 
-  								 simplifies this workflow by adding your working time into a public iCal feed after calling timetracker a PDF for each month wil be generated. The configuration is very easy with the
-  								 help of a JSON file."
+  s.description = "Create time sheets wit the help of a public iCal feed"
 
   s.rubyforge_project = "time_tracker"
 
