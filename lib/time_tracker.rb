@@ -70,11 +70,11 @@ module TimeTracker
 	    # duration in hours
 	    duration = (@end_time.hour - @start_time.hour).to_f 
 	      
-	    # more than 6 hours? 30 minutes break
+	    # break_one	   
 	    if duration >= 6 then
 	      duration -= 0.5
 	      @break_time = 0.5
-	    # more than 9 hours? 45 minutes break
+	    # break_two
 	    elsif duration >= 9 then
 	      duration -= 0.75
 	      @break_time = 0.75
@@ -84,6 +84,8 @@ module TimeTracker
 	      duration
 	  end  
 	  
+	  
+	  # just for debugging
 	  def to_s
 	    "start: #{@start_time}, end: #{@end_time}, summary: #{@summary}"
 	  end
@@ -91,29 +93,41 @@ module TimeTracker
 	end
 	
 	class TimeTracker::TimeSheet
-	  def initialize month
+	  def initialize month, config
 	    @month = month
+	    @config = config
 	  end
 	  
 	  def print
 	    # you worked this month
-	    if @month.entries.length > 0 then
-	      month_name = @month.entries[0].start_time.strftime("%B")
+	    if @month.entries.length > 0 then	
+				# get localized month name
+				config = @config
+				temp_name = @month.entries[0].start_time.strftime("%B")				
+	      month_name = config["time_sheet"][temp_name]
+	      # why namespace clashing here? 
 	      entries = @month.entries
-	      month = @month
+	      month = @month	      
 	      Prawn::Document.generate("#{month_name}.pdf") do
 	        #heading        
 	        font_size 16
-	        text "Zeiterfassungsbogen", :style => :bold, :align => :center
+	        text "#{config["time_sheet"]["title"]}", :style => :bold, :align => :center
 	        font_size 12
 	        move_down 5
-	        text "Name:Dennis Kluge"
-	        text "Monat: #{month_name}"
-	        text "monatliche Arbeitszeit: #{month.fixed_monthly_working_time}"
-	        text "Abt./FB: FB4"
+	        text "#{config["time_sheet"]["name"]}: #{config["name"]}"
+	        text "#{config["time_sheet"]["month"]}: #{month_name}"
+	        text "#{config["time_sheet"]["monthly_working_time"]}: #{month.fixed_monthly_working_time}"
+	        text "#{config["time_sheet"]["department"]}: #{config["department"]}"
 	        table_data = Array.new
 	        # fill table header
-	        table_data.push ["Datum", "Begin", "Ende", "Beschreibung", "Stunden ohne Pause", "Pausenzeit"]
+	        table_data.push [#{config["time_sheet"]["date"]}, 
+	        								 #{config["time_sheet"]["begin"]}, 
+	        								 #{config["time_sheet"]["end"]},
+	        								 #{config["time_sheet"]["description"]}, 
+	        								 #{config["time_sheet"]["hours_without_break"]},
+	        								 #{config["time_sheet"]["break_time"]}
+	        								 ]
+	        								 
 	        entries.each do |entry|
 	          row_data = Array.new
 	          row_data.push "#{entry.start_time.strftime("%d")}."
@@ -127,15 +141,15 @@ module TimeTracker
 	        move_down 5
 	        table table_data  
 	        move_down 5
-	        text "Summe: #{month.monthly_working_time}"
+	        text "#{config["time_sheet"]["sum"]}: #{month.monthly_working_time}"
 	        move_down 5    
-	        text "Uebertrag: #{month.global_offset}"
+	        text "#{config["time_sheet"]["carry"]}: #{month.global_offset}"
 	        move_down 50
 	        text "__________________________"
-	        text "Fuer die Richtigkeit der Eintragungen "
+	        text "#{config["time_sheet"]["correctness"]}"
 	        move_down 50
 	        text "__________________________"
-	        text "Zur Kenntniss genommen "
+	        text "#{config["time_sheet"]["signature"]}"
 	      end
 	    end        
 	  end  
@@ -147,11 +161,14 @@ module TimeTracker
 		def initialize 
 
 			# configuration stuff
-			config_file = File.read "config.json"
+			begin
+				config_file = File.read "config.json"
+			rescue
+				puts "Can't read configuration file"
+			end
 			@config = JSON.parse config_file
 			
 			# Open a file or pass a string to the parser
-			#cal_file = File.open "Work.ics"
 			client = HTTPClient.new
 			cal_file = client.get_content @config["url"]			
 			
@@ -160,7 +177,8 @@ module TimeTracker
 			cals = Icalendar.parse cal_file
 			cal = cals.first
 			
-			#initialize months
+			# initialize months, yep 1 to 13 cause we can use month 1..12
+			# a little bit unclean but the use is more intuitive
 			@months = Array.new
 			13.times do 
 			  @months.push Month.new
@@ -169,8 +187,8 @@ module TimeTracker
 			
 			# sort each event into the right month
 			cal.events.each do |event|  
-			  if event.start.year == 2011 then
-			    @months[event.start.month].add_event event        
+			  if event.start.year == @config["year"] then
+			    @months[event.start.month].add_event event
 			  end
 			end
 		end
@@ -211,22 +229,19 @@ module TimeTracker
 		def start_tracking
 			# sort events within the month and calculate +/- hours
 			temp_offset = @config["offset"];
+			config = @config
 			@months.each_with_index do |month, i|
 			  if i > 0 then
 			    month.sort_entries!
 			    month.global_offset = temp_offset
+			    # reading monthly working time with some dirty conversion for a more beautiful configuration file
 			    month.fixed_monthly_working_time = @config["working_time"][(index_to_month i)]
 			    month.calulate_working_time   # monthly_working_time
 			    temp_offset = month.global_offset
-			    sheet = TimeSheet.new month
+			    sheet = TimeSheet.new month, config
 			    sheet.print
 			  end
 			end
 		end
 	end
 end
-
-#t = TimeTracker::Creator.new
-#t.start_tracking
-
-
