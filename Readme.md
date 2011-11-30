@@ -7,6 +7,7 @@ help of a JSON file.
 
 # Installation & Running
 TimeTracker is tested with Ruby 1.9.2, simply install it by calling: 
+	
 	gem install timetracker.rb
 	
 Goto the directory where you want to create your sheets and create a config file. TimeTracker is highly configurable because of localization issues, different working times etc. 
@@ -66,6 +67,12 @@ Goto the directory where you want to create your sheets and create a config file
 			"December"  : "Dezember"
 		}	
 	}
+	
+Run the command
+	
+	timetracker.rb
+	
+Done!
 
 ## Contributions
 Please contribute!
